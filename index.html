@@ -1,7 +1,146 @@
+<!DOCTYPE html>
+<html lang="pl">
 <head>
+  <meta charset="UTF-8">
   <title>Hub Krzyżówki</title>
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="manifest" href="/site.webmanifest">
+
+  <style>
+    #crossword {
+      display: grid;
+      grid-template-columns: repeat(5, 40px);
+      gap: 5px;
+      margin: 20px 0;
+    }
+
+    input {
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      font-size: 20px;
+      text-transform: uppercase;
+    }
+
+    .black {
+      background: black;
+    }
+  </style>
 </head>
+
+<body>
+
+<h1>🧩 Hub Krzyżówki</h1>
+
+<div id="crossword"></div>
+
+<button onclick="checkAnswers()">Sprawdź</button>
+
+<p id="result"></p>
+
+<script>
+// 🧩 układ krzyżówki
+const layout = [
+  ["", "", "", "", ""],
+  ["", "#", "", "#", ""],
+  ["", "", "", "", ""],
+  ["", "#", "", "#", ""],
+  ["", "", "", "", ""]
+];
+
+// ✅ poprawne odpowiedzi
+const answers = [
+  ["K", "O", "T", "A", "K"],
+  ["A", "#", "L", "#", "O"],
+  ["M", "A", "K", "A", "R"],
+  ["A", "#", "O", "#", "A"],
+  ["L", "A", "S", "E", "R"]
+];
+
+// 🧱 generowanie siatki
+const crossword = document.getElementById("crossword");
+
+layout.forEach(row => {
+  row.forEach(cell => {
+    if (cell === "#") {
+      const div = document.createElement("div");
+      div.classList.add("black");
+      crossword.appendChild(div);
+    } else {
+      const input = document.createElement("input");
+      input.maxLength = 1;
+      crossword.appendChild(input);
+    }
+  });
+});
+
+// 🧠 sprawdzanie
+function checkAnswers() {
+  const inputs = document.querySelectorAll("#crossword input");
+  let index = 0;
+  let correct = true;
+
+  layout.forEach((row, i) => {
+    row.forEach((cell, j) => {
+      if (cell !== "#") {
+        const value = inputs[index].value.toUpperCase();
+
+        if (value !== answers[i][j]) {
+          correct = false;
+          inputs[index].style.background = "salmon";
+        } else {
+          inputs[index].style.background = "lightgreen";
+        }
+
+        index++;
+      }
+    });
+  });
+
+  if (correct) {
+    saveScore(100);
+  }
+}
+</script>
+
+<!-- 🔥 FIREBASE (NA DOLE!) -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+  authDomain: "hub-krzyzowki.firebaseapp.com",
+  databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "hub-krzyzowki",
+  storageBucket: "hub-krzyzowki.firebasestorage.app",
+  messagingSenderId: "836287595684",
+  appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// 💾 zapis
+window.saveScore = function(score) {
+  push(ref(db, 'scores'), {
+    wynik: score,
+    czas: Date.now()
+  });
+}
+
+// 🏆 ranking
+onValue(ref(db, 'scores'), (snapshot) => {
+  const data = snapshot.val();
+  if (!data) return;
+
+  let html = "<h3>Ranking:</h3>";
+
+  for (let id in data) {
+    html += data[id].wynik + "<br>";
+  }
+
+  document.getElementById("result").innerHTML = html;
+});
+</script>
+
+</body>
+</html>
