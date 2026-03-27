@@ -5,10 +5,16 @@
   <title>Hub Krzyżówki</title>
 
   <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+    }
+
     #crossword {
       display: grid;
       grid-template-columns: repeat(5, 40px);
       gap: 5px;
+      justify-content: center;
       margin: 20px 0;
     }
 
@@ -23,6 +29,12 @@
     .black {
       background: black;
     }
+
+    button {
+      margin: 5px;
+      padding: 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -30,14 +42,19 @@
 
 <h1>🧩 Hub Krzyżówki</h1>
 
+<button onclick="login()">Zaloguj się</button>
+<button onclick="logout()">Wyloguj</button>
+
+<p id="user">Nie jesteś zalogowany</p>
+
 <div id="crossword"></div>
 
 <button onclick="checkAnswers()">Sprawdź</button>
 
-<p id="result"></p>
+<div id="result"></div>
 
 <script>
-// 🧩 układ krzyżówki
+// 🧩 układ
 const layout = [
   ["", "", "", "", ""],
   ["", "#", "", "#", ""],
@@ -46,7 +63,7 @@ const layout = [
   ["", "", "", "", ""]
 ];
 
-// ✅ poprawne odpowiedzi
+// ✅ odpowiedzi
 const answers = [
   ["K", "O", "T", "A", "K"],
   ["A", "#", "L", "#", "O"],
@@ -55,7 +72,7 @@ const answers = [
   ["L", "A", "S", "E", "R"]
 ];
 
-// 🧱 generowanie siatki
+// 🧱 generowanie
 const crossword = document.getElementById("crossword");
 
 layout.forEach(row => {
@@ -95,21 +112,20 @@ function checkAnswers() {
     });
   });
 
-if (correct) {
-  const nick = prompt("Podaj nick:");
-  saveScore({
-    nick: nick,
-    wynik: 100
-  });
-}
+  if (correct) {
+    saveScore(100);
+  }
 }
 </script>
 
-<!-- 🔥 FIREBASE (NA DOLE!) -->
+<!-- 🔥 FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } 
+from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 
+// config
 const firebaseConfig = {
   apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
   authDomain: "hub-krzyzowki.firebaseapp.com",
@@ -120,14 +136,38 @@ const firebaseConfig = {
   appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
 };
 
+// init
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
+
+// 🔐 logowanie
+window.login = function() {
+  signInWithPopup(auth, provider);
+}
+
+// 🚪 wylogowanie
+window.logout = function() {
+  signOut(auth);
+}
+
+// 👤 stan użytkownika
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    document.getElementById("user").innerText =
+      "Zalogowany: " + user.displayName;
+  } else {
+    document.getElementById("user").innerText =
+      "Nie jesteś zalogowany";
+  }
+});
 
 // 💾 zapis
-window.saveScore = function(data) {
+window.saveScore = function(score) {
   push(ref(db, 'scores'), {
-    nick: data.nick,
-    wynik: data.wynik,
+    nick: auth.currentUser ? auth.currentUser.displayName : "Gość",
+    wynik: score,
     czas: Date.now()
   });
 }
@@ -137,11 +177,16 @@ onValue(ref(db, 'scores'), (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
 
-  let html = "<h3>Ranking:</h3>";
+  let arr = Object.values(data);
 
-  for (let id in data) {
-    html += data[id].nick + " - " + data[id].wynik + "<br>";
-  }
+  // sort malejąco
+  arr.sort((a, b) => b.wynik - a.wynik);
+
+  let html = "<h3>🏆 TOP 10</h3>";
+
+  arr.slice(0, 10).forEach((item, i) => {
+    html += (i+1) + ". " + item.nick + " - " + item.wynik + "<br>";
+  });
 
   document.getElementById("result").innerHTML = html;
 });
