@@ -95,9 +95,13 @@ function checkAnswers() {
     });
   });
 
-  if (correct) {
-    saveScore(100);
-  }
+if (correct) {
+  const nick = prompt("Podaj nick:");
+  saveScore({
+    nick: nick,
+    wynik: 100
+  });
+}
 }
 </script>
 
