@@ -124,9 +124,10 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // 💾 zapis
-window.saveScore = function(score) {
+window.saveScore = function(data) {
   push(ref(db, 'scores'), {
-    wynik: score,
+    nick: data.nick,
+    wynik: data.wynik,
     czas: Date.now()
   });
 }
@@ -139,7 +140,7 @@ onValue(ref(db, 'scores'), (snapshot) => {
   let html = "<h3>Ranking:</h3>";
 
   for (let id in data) {
-    html += data[id].wynik + "<br>";
+    html += data[id].nick + " - " + data[id].wynik + "<br>";
   }
 
   document.getElementById("result").innerHTML = html;
