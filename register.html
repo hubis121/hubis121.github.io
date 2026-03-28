@@ -62,9 +62,7 @@
       text-decoration: none;
     }
 
-    /* CAPTCHA ukryta na start */
-    #captcha-box {
-      display: none;
+    .captcha-box {
       margin-top: 10px;
     }
   </style>
@@ -86,8 +84,8 @@
     <input type="password" id="password2" placeholder="Powtórz hasło">
     <div class="error" id="password2-error"></div>
 
-    <!-- CAPTCHA -->
-    <div id="captcha-box">
+    <!-- CAPTCHA zawsze widoczna -->
+    <div class="captcha-box">
       <div class="g-recaptcha" data-sitekey="6LfxzpssAAAAAEaY2dRE3ROl-O14osVJb5l2Izc_"></div>
       <div class="error" id="captcha-error"></div>
     </div>
@@ -114,14 +112,11 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    let showCaptcha = false;
-
     document.getElementById("register").onclick = () => {
       const email = document.getElementById("email").value.trim();
       const email2 = document.getElementById("email2").value.trim();
       const password = document.getElementById("password").value;
       const password2 = document.getElementById("password2").value;
-
       const captcha = grecaptcha.getResponse();
 
       // reset błędów
@@ -153,16 +148,13 @@
         ok = false;
       }
 
-      // jeśli wcześniej był błąd → pokaż captcha
-      if (!ok) {
-        showCaptcha = true;
-        document.getElementById("captcha-box").style.display = "block";
-        return;
+      if (!captcha) {
+        document.getElementById("captcha-error").innerText = "Potwierdź captcha";
+        ok = false;
       }
 
-      // jeśli captcha jest aktywna → sprawdź ją
-      if (showCaptcha && !captcha) {
-        document.getElementById("captcha-error").innerText = "Potwierdź captcha";
+      if (!ok) {
+        grecaptcha.reset();
         return;
       }
 
@@ -172,11 +164,6 @@
         })
         .catch(err => {
           document.getElementById("email-error").innerText = err.message;
-
-          // pokaż captcha przy błędzie
-          showCaptcha = true;
-          document.getElementById("captcha-box").style.display = "block";
-
           grecaptcha.reset();
         });
     };
