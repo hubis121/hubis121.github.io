@@ -23,11 +23,6 @@ body {
   text-align:center;
 }
 
-h1 {
-  margin-bottom:10px;
-}
-
-/* INPUTY */
 input {
   width:100%;
   padding:12px;
@@ -37,7 +32,6 @@ input {
   box-sizing:border-box;
 }
 
-/* PRZYCISKI */
 button {
   width:100%;
   padding:12px;
@@ -46,10 +40,8 @@ button {
   border-radius:10px;
   font-weight:bold;
   cursor:pointer;
-  font-size:14px;
 }
 
-/* GOOGLE */
 .google {
   background:white;
   color:#444;
@@ -59,17 +51,14 @@ button {
   gap:10px;
 }
 
-/* LOGIN */
 .login {
   background:#22c55e;
 }
 
-/* REGISTER */
 .register {
   background:#3b82f6;
 }
 
-/* MODAL (nick) */
 .modal {
   position:fixed;
   top:0;
@@ -87,7 +76,6 @@ button {
   padding:20px;
   border-radius:10px;
   width:300px;
-  text-align:center;
 }
 
 .error {
@@ -118,7 +106,7 @@ button {
   <button class="register" onclick="location.href='register.html'">Zarejestruj</button>
 </div>
 
-<!-- MODAL LOGIN -->
+<!-- MODAL -->
 <div class="modal" id="nickModal">
   <div class="modal-box">
     <h3>Wybierz login</h3>
@@ -130,6 +118,7 @@ button {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -146,7 +135,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+   apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
   authDomain: "hub-krzyzowki.firebaseapp.com",
   databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "hub-krzyzowki",
@@ -161,60 +150,72 @@ const db = getFirestore(app);
 
 let googleUser = null;
 
-// GOOGLE LOGIN
+// 🔵 GOOGLE LOGIN
 document.getElementById("googleLogin").onclick = async () => {
   const provider = new GoogleAuthProvider();
   const result = await signInWithPopup(auth, provider);
 
   googleUser = result.user;
 
-  // sprawdź czy ma login w bazie
+  // sprawdź po UID
   const snap = await getDoc(doc(db, "users", googleUser.uid));
 
   if (!snap.exists()) {
-    // pokaż modal
     document.getElementById("nickModal").style.display = "flex";
   } else {
     location.href = "/";
   }
 };
 
-// ZAPIS LOGINU GOOGLE
+// 💾 ZAPIS LOGINU GOOGLE
 document.getElementById("saveNick").onclick = async () => {
   const nick = document.getElementById("nickInput").value.trim();
+  const error = document.getElementById("nickError");
+
+  error.innerText = "";
 
   if (nick.length < 3) {
-    nickError.innerText = "Min 3 znaki";
+    error.innerText = "Min 3 znaki";
     return;
   }
 
-  // sprawdź czy zajęty
-  const exists = await getDoc(doc(db, "users", nick));
-  if (exists.exists()) {
-    nickError.innerText = "Login zajęty";
+  // sprawdź czy login zajęty
+  const check = await getDoc(doc(db, "logins", nick));
+  if (check.exists()) {
+    error.innerText = "Login zajęty";
     return;
   }
 
-  // zapis
-  await updateProfile(googleUser, { displayName: nick });
-
-  await setDoc(doc(db, "users", nick), {
+  // zapis użytkownika
+  await setDoc(doc(db, "users", googleUser.uid), {
+    login: nick,
     email: googleUser.email
+  });
+
+  // mapa login → uid
+  await setDoc(doc(db, "logins", nick), {
+    uid: googleUser.uid,
+    email: googleUser.email
+  });
+
+  await updateProfile(googleUser, {
+    displayName: nick
   });
 
   location.href = "/";
 };
 
-// LOGIN EMAIL / LOGIN
+// 🟢 LOGIN EMAIL / LOGIN
 document.getElementById("loginBtn").onclick = async () => {
-  const input = loginEmail.value.trim();
-  const pass = password.value;
+  const input = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("password").value;
 
   let email = input;
 
   try {
+    // jeśli login
     if (!input.includes("@")) {
-      const snap = await getDoc(doc(db, "users", input));
+      const snap = await getDoc(doc(db, "logins", input));
 
       if (!snap.exists()) {
         alert("Login nie istnieje");
@@ -224,10 +225,11 @@ document.getElementById("loginBtn").onclick = async () => {
       email = snap.data().email;
     }
 
-    await signInWithEmailAndPassword(auth, email, pass);
+    await signInWithEmailAndPassword(auth, email, password);
     location.href = "/";
+
   } catch (e) {
-    alert(e.message);
+    alert("Błąd: " + e.message);
   }
 };
 </script>
