@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Hub Krzyżówki</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body {
       margin: 0;
@@ -42,10 +43,36 @@
   </style>
 </head>
 <body>
+
   <div class="container">
     <h1>🧩 Hub Krzyżówki</h1>
     <p>Witamy na naszej stronie 🚀</p>
-    <a href="#">Zacznij</a>
+    <a href="#" id="startBtn">Zacznij</a>
   </div>
+
+  <!-- 🔥 Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+    authDomain: "hub-krzyzowki.firebaseapp.com",
+    databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "hub-krzyzowki",
+    storageBucket: "hub-krzyzowki.firebasestorage.app",
+    messagingSenderId: "836287595684",
+    appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+
+    // 🔘 przykład akcji po kliknięciu
+    document.getElementById("startBtn").addEventListener("click", () => {
+      alert("Firebase działa 🔥");
+    });
+  </script>
+
 </body>
 </html>
