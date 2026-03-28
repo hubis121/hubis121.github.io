@@ -54,10 +54,7 @@ button {
 .register { background:#3b82f6; }
 .logout { background:#ef4444; }
 
-/* panel usera */
-.user-panel {
-  display:none;
-}
+.user-panel { display:none; }
 </style>
 </head>
 
@@ -65,29 +62,29 @@ button {
 
 <div class="box">
 
-  <h1>🧩 Hub Krzyżówki</h1>
+<h1>🧩 Hub Krzyżówki</h1>
 
-  <!-- PANEL LOGOWANIA -->
-  <div id="authBox">
+<!-- LOGOWANIE -->
+<div id="authBox">
 
-    <button class="google" id="googleLogin">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
-      Zaloguj się przez Google
-    </button>
+<button class="google" id="googleLogin">
+<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+Zaloguj się przez Google
+</button>
 
-    <input id="loginEmail" placeholder="Email lub login">
-    <input type="password" id="password" placeholder="Hasło">
+<input id="loginEmail" placeholder="Email lub login">
+<input type="password" id="password" placeholder="Hasło">
 
-    <button class="login" id="loginBtn">Zaloguj</button>
-    <button class="register" onclick="location.href='register.html'">Zarejestruj</button>
+<button class="login" id="loginBtn">Zaloguj</button>
+<button class="register" onclick="location.href='register.html'">Zarejestruj</button>
 
-  </div>
+</div>
 
-  <!-- PANEL UŻYTKOWNIKA -->
-  <div id="userPanel" class="user-panel">
-    <h2 id="welcomeText"></h2>
-    <button class="logout" id="logoutBtn">Wyloguj</button>
-  </div>
+<!-- PANEL -->
+<div id="userPanel" class="user-panel">
+<h2 id="welcomeText"></h2>
+<button class="logout" id="logoutBtn">Wyloguj</button>
+</div>
 
 </div>
 
@@ -120,15 +117,13 @@ const firebaseConfig = {
   messagingSenderId: "836287595684",
   appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
 };
-};
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let googleUser = null;
 
-// 🔥 OBSŁUGA STANU
+// 🔥 STAN LOGOWANIA
 onAuthStateChanged(auth, async (user) => {
 
   if (user) {
@@ -137,75 +132,95 @@ onAuthStateChanged(auth, async (user) => {
     if (snap.exists()) {
       const login = snap.data().login;
 
-      // pokaż panel usera
-      document.getElementById("authBox").style.display = "none";
-      document.getElementById("userPanel").style.display = "block";
+      authBox.style.display = "none";
+      userPanel.style.display = "block";
 
-      document.getElementById("welcomeText").innerText = "Witaj, " + login + " 😎";
+      welcomeText.innerText = "Witaj, " + login + " 😎";
     }
 
   } else {
-    // brak usera → pokaż logowanie
-    document.getElementById("authBox").style.display = "block";
-    document.getElementById("userPanel").style.display = "none";
+    authBox.style.display = "block";
+    userPanel.style.display = "none";
   }
 });
+
 
 // 🔵 GOOGLE LOGIN
 document.getElementById("googleLogin").onclick = async () => {
   const provider = new GoogleAuthProvider();
 
-  const result = await signInWithPopup(auth, provider);
-  googleUser = result.user;
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
 
-  const snap = await getDoc(doc(db, "users", googleUser.uid));
+    const snap = await getDoc(doc(db, "users", user.uid));
 
-  if (!snap.exists()) {
-    const nick = prompt("Podaj login:");
+    if (!snap.exists()) {
+      let nick = prompt("Podaj login:");
 
-    if (!nick || nick.length < 3) {
-      alert("Login min 3 znaki");
-      return;
+      if (!nick || nick.length < 3) {
+        alert("Login min 3 znaki");
+        await signOut(auth);
+        return;
+      }
+
+      const check = await getDoc(doc(db, "logins", nick));
+      if (check.exists()) {
+        alert("Login zajęty");
+        await signOut(auth);
+        return;
+      }
+
+      await setDoc(doc(db, "users", user.uid), {
+        login: nick,
+        email: user.email
+      });
+
+      await setDoc(doc(db, "logins", nick), {
+        uid: user.uid,
+        email: user.email
+      });
+
+      await updateProfile(user, {
+        displayName: nick
+      });
     }
 
-    await setDoc(doc(db, "users", googleUser.uid), {
-      login: nick,
-      email: googleUser.email
-    });
-
-    await setDoc(doc(db, "logins", nick), {
-      uid: googleUser.uid,
-      email: googleUser.email
-    });
-
-    await updateProfile(googleUser, {
-      displayName: nick
-    });
+  } catch (e) {
+    alert("Błąd Google: " + e.message);
+    console.error(e);
   }
 };
 
-// 🟢 LOGIN
+
+// 🟢 LOGIN EMAIL / LOGIN
 document.getElementById("loginBtn").onclick = async () => {
   const input = loginEmail.value.trim();
   const pass = password.value;
 
   let email = input;
 
-  if (!input.includes("@")) {
-    const snap = await getDoc(doc(db, "logins", input));
+  try {
+    if (!input.includes("@")) {
+      const snap = await getDoc(doc(db, "logins", input));
 
-    if (!snap.exists()) {
-      alert("Login nie istnieje");
-      return;
+      if (!snap.exists()) {
+        alert("Login nie istnieje");
+        return;
+      }
+
+      email = snap.data().email;
     }
 
-    email = snap.data().email;
-  }
+    await signInWithEmailAndPassword(auth, email, pass);
 
-  await signInWithEmailAndPassword(auth, email, pass);
+  } catch (e) {
+    alert("Błąd: " + e.message);
+  }
 };
 
-// 🔴 LOGOUT
+
+// 🔴 WYLOGUJ
 document.getElementById("logoutBtn").onclick = () => {
   signOut(auth);
 };
