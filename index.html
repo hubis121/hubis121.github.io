@@ -64,7 +64,6 @@ button {
 
 <h1>🧩 Hub Krzyżówki</h1>
 
-<!-- LOGOWANIE -->
 <div id="authBox">
 
 <button class="google" id="googleLogin">
@@ -80,7 +79,6 @@ Zaloguj się przez Google
 
 </div>
 
-<!-- PANEL -->
 <div id="userPanel" class="user-panel">
 <h2 id="welcomeText"></h2>
 <button class="logout" id="logoutBtn">Wyloguj</button>
@@ -122,28 +120,29 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 
-// 🔥 OBSŁUGA LOGOWANIA
+// ⚡ NATYCHMIASTOWY UI
 onAuthStateChanged(auth, async (user) => {
 
   if (user) {
-    let login = "Użytkownik";
 
+    authBox.style.display = "none";
+    userPanel.style.display = "block";
+
+    // ⚡ szybki tekst od razu
+    let login = user.displayName || "Użytkownik";
+    welcomeText.innerText = "Witaj, " + login + " 😎";
+
+    // 🔄 poprawka z Firestore w tle
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
 
       if (snap.exists()) {
-        login = snap.data().login;
-      } else {
-        login = user.displayName || "Użytkownik";
+        welcomeText.innerText = "Witaj, " + snap.data().login + " 😎";
       }
+
     } catch (e) {
       console.log("Firestore error:", e);
-      login = user.displayName || "Użytkownik";
     }
-
-    authBox.style.display = "none";
-    userPanel.style.display = "block";
-    welcomeText.innerText = "Witaj, " + login + " 😎";
 
   } else {
     authBox.style.display = "block";
@@ -152,7 +151,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 
-// 🔵 GOOGLE LOGIN (NIE DO ZABICIA 💀)
+// 🔵 GOOGLE LOGIN (działa zawsze)
 document.getElementById("googleLogin").onclick = async () => {
   const provider = new GoogleAuthProvider();
 
@@ -160,7 +159,8 @@ document.getElementById("googleLogin").onclick = async () => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    // 🔥 LOGOWANIE JUŻ DZIAŁA
+    // ⚡ natychmiast feedback
+    welcomeText.innerText = "Logowanie... 😎";
 
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
@@ -189,7 +189,6 @@ document.getElementById("googleLogin").onclick = async () => {
 
     } catch (e) {
       console.log("Firestore error:", e);
-      // nic nie blokujemy
     }
 
   } catch (e) {
