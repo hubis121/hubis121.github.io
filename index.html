@@ -23,20 +23,17 @@ body {
   text-align:center;
 }
 
-input {
+input, button {
   width:100%;
   padding:12px;
   margin:6px 0;
   border-radius:10px;
   border:none;
+  font-size:15px;
+  box-sizing:border-box;
 }
 
 button {
-  width:100%;
-  padding:12px;
-  margin-top:8px;
-  border:none;
-  border-radius:10px;
   font-weight:bold;
   cursor:pointer;
 }
@@ -106,7 +103,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
   authDomain: "hub-krzyzowki.firebaseapp.com",
   databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "hub-krzyzowki",
@@ -128,18 +125,17 @@ onAuthStateChanged(auth, async (user) => {
     authBox.style.display = "none";
     userPanel.style.display = "block";
 
-    // ⚡ NAJPIERW displayName (Google)
+    // ⚡ szybki nick (Google)
     let login = user.displayName || "Użytkownik";
     welcomeText.innerText = "Witaj, " + login + " 😎";
 
-    // 🔄 potem Firestore (jeśli masz własny login)
+    // 🔄 Firestore (login własny)
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
 
       if (snap.exists()) {
         login = snap.data().login;
         welcomeText.innerText = "Witaj, " + login + " 😎";
-
         localStorage.setItem("login", login);
       }
 
@@ -162,7 +158,6 @@ document.getElementById("googleLogin").onclick = async () => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    // ⚡ OD RAZU nick Google
     welcomeText.innerText = "Witaj, " + user.displayName + " 😎";
 
     try {
