@@ -22,22 +22,17 @@
     }
     h1 {
       font-size: 3rem;
-      margin-bottom: 10px;
     }
-    p {
-      opacity: 0.7;
-    }
-    a {
-      display: inline-block;
+    button {
       margin-top: 20px;
       padding: 10px 20px;
       background: #22c55e;
-      color: black;
-      text-decoration: none;
+      border: none;
       border-radius: 8px;
       font-weight: bold;
+      cursor: pointer;
     }
-    a:hover {
+    button:hover {
       background: #16a34a;
     }
   </style>
@@ -46,31 +41,59 @@
 
   <div class="container">
     <h1>🧩 Hub Krzyżówki</h1>
-    <p>Witamy na naszej stronie 🚀</p>
-    <a href="#" id="startBtn">Zacznij</a>
+    <p id="userInfo">Nie jesteś zalogowany</p>
+    <button id="loginBtn">Zaloguj się Google</button>
+    <button id="logoutBtn" style="display:none;">Wyloguj</button>
   </div>
 
-  <!-- 🔥 Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } 
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
-    apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
-    authDomain: "hub-krzyzowki.firebaseapp.com",
-    databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "hub-krzyzowki",
-    storageBucket: "hub-krzyzowki.firebasestorage.app",
-    messagingSenderId: "836287595684",
-    appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
+  apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+  authDomain: "hub-krzyzowki.firebaseapp.com",
+  databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "hub-krzyzowki",
+  storageBucket: "hub-krzyzowki.firebasestorage.app",
+  messagingSenderId: "836287595684",
+  appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
     };
 
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
-    // 🔘 przykład akcji po kliknięciu
-    document.getElementById("startBtn").addEventListener("click", () => {
-      alert("Firebase działa 🔥");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userInfo = document.getElementById("userInfo");
+
+    // 🔐 logowanie
+    loginBtn.addEventListener("click", async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        alert("Błąd logowania: " + err.message);
+      }
+    });
+
+    // 🚪 wylogowanie
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+    // 👀 obserwacja użytkownika
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        userInfo.textContent = "Zalogowany jako: " + user.displayName;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+      } else {
+        userInfo.textContent = "Nie jesteś zalogowany";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+      }
     });
   </script>
 
