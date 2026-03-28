@@ -5,6 +5,8 @@
   <title>Rejestracja - Hub Krzyżówki</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
   <style>
     body {
       margin: 0;
@@ -20,6 +22,7 @@
 
     .box {
       max-width: 400px;
+      width: 100%;
     }
 
     input {
@@ -56,7 +59,13 @@
     <h1>📝 Rejestracja</h1>
 
     <input type="email" id="email" placeholder="Email">
+    <input type="email" id="email2" placeholder="Powtórz email">
+
     <input type="password" id="password" placeholder="Hasło">
+    <input type="password" id="password2" placeholder="Powtórz hasło">
+
+    <!-- CAPTCHA -->
+    <div class="g-recaptcha" data-sitekey="TU_WSTAW_SITE_KEY"></div>
 
     <button id="register">Utwórz konto</button>
 
@@ -82,15 +91,35 @@
 
     document.getElementById("register").onclick = () => {
       const email = document.getElementById("email").value.trim();
+      const email2 = document.getElementById("email2").value.trim();
       const password = document.getElementById("password").value;
+      const password2 = document.getElementById("password2").value;
 
+      const captcha = grecaptcha.getResponse();
+
+      // WALIDACJA
       if (!email.includes("@")) {
         alert("Podaj poprawny email!");
         return;
       }
 
+      if (email !== email2) {
+        alert("Maile nie są takie same!");
+        return;
+      }
+
       if (password.length < 6) {
-        alert("Hasło musi mieć min. 6 znaków!");
+        alert("Hasło min. 6 znaków!");
+        return;
+      }
+
+      if (password !== password2) {
+        alert("Hasła nie są takie same!");
+        return;
+      }
+
+      if (!captcha) {
+        alert("Potwierdź, że nie jesteś robotem!");
         return;
       }
 
