@@ -96,9 +96,8 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  updateProfile,
-  onAuthStateChanged,
-  signOut
+  signOut,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
@@ -123,20 +122,28 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 
-// 🔥 STAN LOGOWANIA
+// 🔥 OBSŁUGA LOGOWANIA
 onAuthStateChanged(auth, async (user) => {
 
   if (user) {
-    const snap = await getDoc(doc(db, "users", user.uid));
+    let login = "Użytkownik";
 
-    if (snap.exists()) {
-      const login = snap.data().login;
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid));
 
-      authBox.style.display = "none";
-      userPanel.style.display = "block";
-
-      welcomeText.innerText = "Witaj, " + login + " 😎";
+      if (snap.exists()) {
+        login = snap.data().login;
+      } else {
+        login = user.displayName || "Użytkownik";
+      }
+    } catch (e) {
+      console.log("Firestore error:", e);
+      login = user.displayName || "Użytkownik";
     }
+
+    authBox.style.display = "none";
+    userPanel.style.display = "block";
+    welcomeText.innerText = "Witaj, " + login + " 😎";
 
   } else {
     authBox.style.display = "block";
@@ -145,7 +152,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 
-// 🔵 GOOGLE LOGIN
+// 🔵 GOOGLE LOGIN (NIE DO ZABICIA 💀)
 document.getElementById("googleLogin").onclick = async () => {
   const provider = new GoogleAuthProvider();
 
@@ -153,42 +160,40 @@ document.getElementById("googleLogin").onclick = async () => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    const snap = await getDoc(doc(db, "users", user.uid));
+    // 🔥 LOGOWANIE JUŻ DZIAŁA
 
-    if (!snap.exists()) {
-      let nick = prompt("Podaj login:");
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid));
 
-      if (!nick || nick.length < 3) {
-        alert("Login min 3 znaki");
-        await signOut(auth);
-        return;
+      if (!snap.exists()) {
+        let nick = prompt("Podaj login:");
+
+        if (!nick || nick.length < 3) return;
+
+        const check = await getDoc(doc(db, "logins", nick));
+        if (check.exists()) {
+          alert("Login zajęty");
+          return;
+        }
+
+        await setDoc(doc(db, "users", user.uid), {
+          login: nick,
+          email: user.email
+        });
+
+        await setDoc(doc(db, "logins", nick), {
+          uid: user.uid,
+          email: user.email
+        });
       }
 
-      const check = await getDoc(doc(db, "logins", nick));
-      if (check.exists()) {
-        alert("Login zajęty");
-        await signOut(auth);
-        return;
-      }
-
-      await setDoc(doc(db, "users", user.uid), {
-        login: nick,
-        email: user.email
-      });
-
-      await setDoc(doc(db, "logins", nick), {
-        uid: user.uid,
-        email: user.email
-      });
-
-      await updateProfile(user, {
-        displayName: nick
-      });
+    } catch (e) {
+      console.log("Firestore error:", e);
+      // nic nie blokujemy
     }
 
   } catch (e) {
     alert("Błąd Google: " + e.message);
-    console.error(e);
   }
 };
 
