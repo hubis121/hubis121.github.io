@@ -120,7 +120,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 
-// 🔥 AUTO LOGIN UI
+// 🔥 UI LOGIN
 onAuthStateChanged(auth, async (user) => {
 
   if (user) {
@@ -128,29 +128,23 @@ onAuthStateChanged(auth, async (user) => {
     authBox.style.display = "none";
     userPanel.style.display = "block";
 
-    // ⚡ 1. NAJPIERW localStorage
-    let savedLogin = localStorage.getItem("login");
-    if (savedLogin) {
-      welcomeText.innerText = "Witaj, " + savedLogin + " 😎";
-    } else {
-      welcomeText.innerText = "Witaj, hubis 😎";
-    }
+    // ⚡ NAJPIERW displayName (Google)
+    let login = user.displayName || "Użytkownik";
+    welcomeText.innerText = "Witaj, " + login + " 😎";
 
-    // 🔄 2. potem Firestore
+    // 🔄 potem Firestore (jeśli masz własny login)
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
 
       if (snap.exists()) {
-        const login = snap.data().login;
-
+        login = snap.data().login;
         welcomeText.innerText = "Witaj, " + login + " 😎";
 
-        // 💾 zapis lokalny
         localStorage.setItem("login", login);
       }
 
     } catch (e) {
-      console.log("Firestore error:", e);
+      console.log(e);
     }
 
   } else {
@@ -168,8 +162,8 @@ document.getElementById("googleLogin").onclick = async () => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    // ⚡ instant efekt
-    welcomeText.innerText = "Witaj, hubis 😎";
+    // ⚡ OD RAZU nick Google
+    welcomeText.innerText = "Witaj, " + user.displayName + " 😎";
 
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
@@ -195,12 +189,11 @@ document.getElementById("googleLogin").onclick = async () => {
           email: user.email
         });
 
-        // 💾 zapis od razu
         localStorage.setItem("login", nick);
       }
 
     } catch (e) {
-      console.log("Firestore error:", e);
+      console.log(e);
     }
 
   } catch (e) {
