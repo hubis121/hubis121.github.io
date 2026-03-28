@@ -106,7 +106,7 @@ button {
   <button class="register" onclick="location.href='register.html'">Zarejestruj</button>
 </div>
 
-<!-- MODAL -->
+<!-- MODAL LOGIN -->
 <div class="modal" id="nickModal">
   <div class="modal-box">
     <h3>Wybierz login</h3>
@@ -124,7 +124,8 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  updateProfile
+  updateProfile,
+  onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
@@ -150,20 +151,35 @@ const db = getFirestore(app);
 
 let googleUser = null;
 
+// 🔥 OBSŁUGA STANU LOGOWANIA
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+
+  const snap = await getDoc(doc(db, "users", user.uid));
+
+  if (snap.exists()) {
+    // użytkownik już ma login → wpuszczamy
+    window.location.href = "/";
+  }
+});
+
 // 🔵 GOOGLE LOGIN
 document.getElementById("googleLogin").onclick = async () => {
   const provider = new GoogleAuthProvider();
-  const result = await signInWithPopup(auth, provider);
 
-  googleUser = result.user;
+  try {
+    const result = await signInWithPopup(auth, provider);
+    googleUser = result.user;
 
-  // sprawdź po UID
-  const snap = await getDoc(doc(db, "users", googleUser.uid));
+    const snap = await getDoc(doc(db, "users", googleUser.uid));
 
-  if (!snap.exists()) {
-    document.getElementById("nickModal").style.display = "flex";
-  } else {
-    location.href = "/";
+    if (!snap.exists()) {
+      // nowy użytkownik → wybór loginu
+      document.getElementById("nickModal").style.display = "flex";
+    }
+
+  } catch (e) {
+    alert("Błąd Google: " + e.message);
   }
 };
 
@@ -186,7 +202,7 @@ document.getElementById("saveNick").onclick = async () => {
     return;
   }
 
-  // zapis użytkownika
+  // zapis usera
   await setDoc(doc(db, "users", googleUser.uid), {
     login: nick,
     email: googleUser.email
@@ -202,7 +218,7 @@ document.getElementById("saveNick").onclick = async () => {
     displayName: nick
   });
 
-  location.href = "/";
+  window.location.href = "/";
 };
 
 // 🟢 LOGIN EMAIL / LOGIN
@@ -213,7 +229,6 @@ document.getElementById("loginBtn").onclick = async () => {
   let email = input;
 
   try {
-    // jeśli login
     if (!input.includes("@")) {
       const snap = await getDoc(doc(db, "logins", input));
 
@@ -226,7 +241,7 @@ document.getElementById("loginBtn").onclick = async () => {
     }
 
     await signInWithEmailAndPassword(auth, email, password);
-    location.href = "/";
+    window.location.href = "/";
 
   } catch (e) {
     alert("Błąd: " + e.message);
