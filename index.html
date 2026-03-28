@@ -41,6 +41,17 @@
     button:hover, a:hover {
       background: #16a34a;
     }
+    .footer {
+      margin-top: 30px;
+      font-size: 0.9rem;
+      opacity: 0.6;
+    }
+    .footer a {
+      background: none;
+      color: #94a3b8;
+      padding: 0;
+      margin: 0 5px;
+    }
   </style>
 </head>
 <body>
@@ -58,6 +69,12 @@
     <a href="https://hub-krzyzowki.firebaseapp.com" target="_blank">
       Przejdź do aplikacji Hub Krzyżówki
     </a>
+
+    <!-- 📜 LINKI DLA GOOGLE -->
+    <div class="footer">
+      <a href="/privacy.html">Polityka prywatności</a> |
+      <a href="/terms.html">Warunki korzystania</a>
+    </div>
   </div>
 
   <!-- 🔥 Firebase -->
@@ -72,12 +89,13 @@
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
-      apiKey: "...",
-      authDomain: "...",
-      projectId: "...",
-      storageBucket: "...",
-      messagingSenderId: "...",
-      appId: "..."
+ apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+  authDomain: "hub-krzyzowki.firebaseapp.com",
+  databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "hub-krzyzowki",
+  storageBucket: "hub-krzyzowki.firebasestorage.app",
+  messagingSenderId: "836287595684",
+  appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
     };
 
     const app = initializeApp(firebaseConfig);
