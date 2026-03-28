@@ -27,10 +27,6 @@
       margin-bottom: 10px;
     }
 
-    p {
-      opacity: 0.7;
-    }
-
     .google-btn {
       display: flex;
       align-items: center;
@@ -45,16 +41,10 @@
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .google-btn img {
-      width: 20px;
     }
 
     .google-btn:hover {
       background: #e5e7eb;
-      transform: scale(1.03);
     }
 
     .auth-box input {
@@ -76,28 +66,11 @@
 
     #login-email {
       background: #22c55e;
-      color: black;
     }
 
     #register-email {
       background: #3b82f6;
       color: white;
-    }
-
-    .links {
-      margin-top: 20px;
-      font-size: 14px;
-      opacity: 0.6;
-    }
-
-    .links a {
-      color: #22c55e;
-      text-decoration: none;
-      margin: 0 10px;
-    }
-
-    .links a:hover {
-      text-decoration: underline;
     }
 
     .user-box {
@@ -114,8 +87,16 @@
       cursor: pointer;
     }
 
-    #logout:hover {
-      background: #dc2626;
+    .links {
+      margin-top: 20px;
+      font-size: 14px;
+      opacity: 0.6;
+    }
+
+    .links a {
+      color: #22c55e;
+      text-decoration: none;
+      margin: 0 10px;
     }
   </style>
 </head>
@@ -123,11 +104,11 @@
 <body>
   <div class="container">
     <h1>🧩 Hub Krzyżówki</h1>
-    <p>Witamy na naszej stronie 🚀</p>
+    <p>Witamy 🚀</p>
 
     <!-- GOOGLE -->
     <button id="google-login" class="google-btn">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
       Zaloguj się przez Google
     </button>
 
@@ -140,7 +121,7 @@
       <button id="register-email">Zarejestruj</button>
     </div>
 
-    <div class="user-box" id="user-box"></div>
+    <div id="user-box" class="user-box"></div>
 
     <div class="links">
       <a href="/privacy.html">Polityka prywatności</a> |
@@ -156,18 +137,18 @@
       GoogleAuthProvider,
       signInWithEmailAndPassword,
       createUserWithEmailAndPassword,
-      onAuthStateChanged, 
-      signOut 
+      onAuthStateChanged,
+      signOut
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
-      authDomain: "hub-krzyzowki.firebaseapp.com",
-     databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
-     projectId: "hub-krzyzowki",
-   storageBucket: "hub-krzyzowki.firebasestorage.app",
-   messagingSenderId: "836287595684",
-   appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
+  authDomain: "hub-krzyzowki.firebaseapp.com",
+  databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "hub-krzyzowki",
+  storageBucket: "hub-krzyzowki.firebasestorage.app",
+  messagingSenderId: "836287595684",
+  appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -180,25 +161,40 @@
     // GOOGLE LOGIN
     loginBtn.onclick = () => {
       signInWithPopup(auth, provider)
-        .catch(err => alert(err.message));
-    };
-
-    // EMAIL LOGIN
-    document.getElementById("login-email").onclick = () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-
-      signInWithEmailAndPassword(auth, email, password)
-        .catch(err => alert(err.message));
+        .catch(err => alert("Błąd: " + err.message));
     };
 
     // REGISTER
     document.getElementById("register-email").onclick = () => {
-      const email = document.getElementById("email").value;
+      const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
+      if (!email.includes("@")) {
+        alert("Podaj poprawny email!");
+        return;
+      }
+
+      if (password.length < 6) {
+        alert("Hasło musi mieć min. 6 znaków!");
+        return;
+      }
+
       createUserWithEmailAndPassword(auth, email, password)
-        .catch(err => alert(err.message));
+        .catch(err => alert("Błąd: " + err.message));
+    };
+
+    // LOGIN
+    document.getElementById("login-email").onclick = () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!email.includes("@")) {
+        alert("Podaj poprawny email!");
+        return;
+      }
+
+      signInWithEmailAndPassword(auth, email, password)
+        .catch(err => alert("Błąd: " + err.message));
     };
 
     // STATE
