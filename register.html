@@ -1,193 +1,165 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>Rejestracja - Hub Krzyżówki</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Rejestracja</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- reCAPTCHA -->
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #0f172a;
-      color: #e2e8f0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+<style>
+body {
+  background:#0f172a;
+  color:white;
+  font-family:Arial;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
 
-    .box {
-      max-width: 400px;
-      width: 100%;
-      text-align: center;
-    }
+.box { max-width:400px; width:100%; }
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-    }
+input {
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:8px;
+  border:none;
+}
 
-    .error {
-      color: #ef4444;
-      font-size: 13px;
-      text-align: left;
-      min-height: 16px;
-      margin-bottom: 5px;
-    }
+.error {
+  color:red;
+  font-size:13px;
+  min-height:16px;
+}
 
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #3b82f6;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .back {
-      margin-top: 15px;
-      display: block;
-      color: #22c55e;
-      text-decoration: none;
-    }
-
-    .captcha-box {
-      margin-top: 10px;
-    }
-  </style>
+button {
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border:none;
+  border-radius:8px;
+  background:#3b82f6;
+}
+</style>
 </head>
 
 <body>
-  <div class="box">
-    <h1>📝 Rejestracja</h1>
+<div class="box">
 
-    <!-- LOGIN -->
-    <input type="text" id="login" placeholder="Login">
-    <div class="error" id="login-error"></div>
+<h2>Rejestracja</h2>
 
-    <input type="email" id="email" placeholder="Email">
-    <div class="error" id="email-error"></div>
+<input id="login" placeholder="Login">
+<div class="error" id="login-error"></div>
 
-    <input type="email" id="email2" placeholder="Powtórz email">
-    <div class="error" id="email2-error"></div>
+<input id="email" placeholder="Email">
+<div class="error" id="email-error"></div>
 
-    <input type="password" id="password" placeholder="Hasło">
-    <div class="error" id="password-error"></div>
+<input id="email2" placeholder="Powtórz email">
+<div class="error" id="email2-error"></div>
 
-    <input type="password" id="password2" placeholder="Powtórz hasło">
-    <div class="error" id="password2-error"></div>
+<input type="password" id="password" placeholder="Hasło">
+<div class="error" id="password-error"></div>
 
-    <!-- CAPTCHA -->
-    <div class="captcha-box">
-      <div class="g-recaptcha" data-sitekey="6LfxzpssAAAAAEaY2dRE3ROl-O14osVJb5l2Izc_"></div>
-      <div class="error" id="captcha-error"></div>
-    </div>
+<input type="password" id="password2" placeholder="Powtórz hasło">
+<div class="error" id="password2-error"></div>
 
-    <button id="register">Utwórz konto</button>
+<div class="g-recaptcha" data-sitekey="6LfxzpssAAAAAEaY2dRE3ROl-O14osVJb5l2Izc_"></div>
+<div class="error" id="captcha-error"></div>
 
-    <a href="/" class="back">⬅ Powrót do strony głównej</a>
-  </div>
+<button id="register">Utwórz konto</button>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { 
-      getAuth, 
-      createUserWithEmailAndPassword,
-      updateProfile 
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+</div>
 
-    const firebaseConfig = {
-     apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+   apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
   authDomain: "hub-krzyzowki.firebaseapp.com",
   databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "hub-krzyzowki",
   storageBucket: "hub-krzyzowki.firebasestorage.app",
   messagingSenderId: "836287595684",
   appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
-    };
+};
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    document.getElementById("register").onclick = () => {
-      const login = document.getElementById("login").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const email2 = document.getElementById("email2").value.trim();
-      const password = document.getElementById("password").value;
-      const password2 = document.getElementById("password2").value;
-      const captcha = grecaptcha.getResponse();
+document.getElementById("register").onclick = async () => {
+  const login = loginEl.value.trim();
+  const email = emailEl.value.trim();
+  const email2 = email2El.value.trim();
+  const pass = passEl.value;
+  const pass2 = pass2El.value;
+  const captcha = grecaptcha.getResponse();
 
-      // reset błędów
-      document.getElementById("login-error").innerText = "";
-      document.getElementById("email-error").innerText = "";
-      document.getElementById("email2-error").innerText = "";
-      document.getElementById("password-error").innerText = "";
-      document.getElementById("password2-error").innerText = "";
-      document.getElementById("captcha-error").innerText = "";
+  let ok = true;
 
-      let ok = true;
+  if (login.length < 3) {
+    loginError.innerText = "Min 3 znaki";
+    ok = false;
+  }
 
-      if (login.length < 3) {
-        document.getElementById("login-error").innerText = "Login min. 3 znaki";
-        ok = false;
-      }
+  const exists = await getDoc(doc(db, "users", login));
+  if (exists.exists()) {
+    loginError.innerText = "Login zajęty";
+    ok = false;
+  }
 
-      if (!email.includes("@")) {
-        document.getElementById("email-error").innerText = "Niepoprawny email";
-        ok = false;
-      }
+  if (email !== email2) {
+    email2Error.innerText = "Maile różne";
+    ok = false;
+  }
 
-      if (email !== email2) {
-        document.getElementById("email2-error").innerText = "Maile nie są takie same";
-        ok = false;
-      }
+  if (pass !== pass2) {
+    password2Error.innerText = "Hasła różne";
+    ok = false;
+  }
 
-      if (password.length < 6) {
-        document.getElementById("password-error").innerText = "Min. 6 znaków";
-        ok = false;
-      }
+  if (!captcha) {
+    captchaError.innerText = "Potwierdź captcha";
+    ok = false;
+  }
 
-      if (password !== password2) {
-        document.getElementById("password2-error").innerText = "Hasła nie są takie same";
-        ok = false;
-      }
+  if (!ok) {
+    grecaptcha.reset();
+    return;
+  }
 
-      if (!captcha) {
-        document.getElementById("captcha-error").innerText = "Potwierdź captcha";
-        ok = false;
-      }
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
 
-      if (!ok) {
-        grecaptcha.reset();
-        return;
-      }
+    await updateProfile(cred.user, {
+      displayName: login
+    });
 
-      createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          // zapis loginu jako displayName
-          return updateProfile(userCredential.user, {
-            displayName: login
-          });
-        })
-        .then(() => {
-          window.location.href = "/";
-        })
-        .catch(err => {
-          document.getElementById("login-error").innerText = err.message;
-          grecaptcha.reset();
-        });
-    };
-  </script>
+    await setDoc(doc(db, "users", login), {
+      email: email
+    });
+
+    location.href = "/";
+  } catch (e) {
+    emailError.innerText = e.message;
+    grecaptcha.reset();
+  }
+};
+</script>
+
 </body>
 </html>
