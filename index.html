@@ -120,7 +120,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 
-// ⚡ NATYCHMIASTOWY UI
+// 🔥 AUTO LOGIN UI
 onAuthStateChanged(auth, async (user) => {
 
   if (user) {
@@ -128,16 +128,25 @@ onAuthStateChanged(auth, async (user) => {
     authBox.style.display = "none";
     userPanel.style.display = "block";
 
-    // ⚡ szybki tekst od razu
-    let login = user.displayName || "Użytkownik";
-    welcomeText.innerText = "Witaj, " + login + " 😎";
+    // ⚡ 1. NAJPIERW localStorage
+    let savedLogin = localStorage.getItem("login");
+    if (savedLogin) {
+      welcomeText.innerText = "Witaj, " + savedLogin + " 😎";
+    } else {
+      welcomeText.innerText = "Witaj, hubis 😎";
+    }
 
-    // 🔄 poprawka z Firestore w tle
+    // 🔄 2. potem Firestore
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
 
       if (snap.exists()) {
-        welcomeText.innerText = "Witaj, " + snap.data().login + " 😎";
+        const login = snap.data().login;
+
+        welcomeText.innerText = "Witaj, " + login + " 😎";
+
+        // 💾 zapis lokalny
+        localStorage.setItem("login", login);
       }
 
     } catch (e) {
@@ -151,7 +160,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 
-// 🔵 GOOGLE LOGIN (działa zawsze)
+// 🔵 GOOGLE LOGIN
 document.getElementById("googleLogin").onclick = async () => {
   const provider = new GoogleAuthProvider();
 
@@ -159,8 +168,8 @@ document.getElementById("googleLogin").onclick = async () => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    // ⚡ natychmiast feedback
-    welcomeText.innerText = "Logowanie... 😎";
+    // ⚡ instant efekt
+    welcomeText.innerText = "Witaj, hubis 😎";
 
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
@@ -185,6 +194,9 @@ document.getElementById("googleLogin").onclick = async () => {
           uid: user.uid,
           email: user.email
         });
+
+        // 💾 zapis od razu
+        localStorage.setItem("login", nick);
       }
 
     } catch (e) {
@@ -226,6 +238,7 @@ document.getElementById("loginBtn").onclick = async () => {
 
 // 🔴 WYLOGUJ
 document.getElementById("logoutBtn").onclick = () => {
+  localStorage.removeItem("login");
   signOut(auth);
 };
 </script>
