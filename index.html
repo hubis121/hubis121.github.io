@@ -1,66 +1,105 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>Hub Krzyżówki</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Hub Krzyżówki</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #0b132b;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+<style>
+body {
+  margin:0;
+  font-family:Arial;
+  background:#0b132b;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
 
-    .box {
-      text-align: center;
-      width: 100%;
-      max-width: 400px;
-    }
+.box {
+  width:100%;
+  max-width:380px;
+  text-align:center;
+}
 
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 6px 0;
-      border-radius: 8px;
-      border: none;
-    }
+h1 {
+  margin-bottom:10px;
+}
 
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 8px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+/* INPUTY */
+input {
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  border-radius:10px;
+  border:none;
+  box-sizing:border-box;
+}
 
-    .google {
-      background: white;
-      color: #444;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-    }
+/* PRZYCISKI */
+button {
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+  cursor:pointer;
+  font-size:14px;
+}
 
-    .login {
-      background: #22c55e;
-    }
+/* GOOGLE */
+.google {
+  background:white;
+  color:#444;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
 
-    .register {
-      background: #3b82f6;
-    }
-  </style>
+/* LOGIN */
+.login {
+  background:#22c55e;
+}
+
+/* REGISTER */
+.register {
+  background:#3b82f6;
+}
+
+/* MODAL (nick) */
+.modal {
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.7);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-box {
+  background:#1e293b;
+  padding:20px;
+  border-radius:10px;
+  width:300px;
+  text-align:center;
+}
+
+.error {
+  color:#ef4444;
+  font-size:13px;
+  min-height:16px;
+}
+</style>
 </head>
 
 <body>
+
 <div class="box">
   <h1>🧩 Hub Krzyżówki</h1>
 
@@ -70,20 +109,23 @@
     Zaloguj się przez Google
   </button>
 
-  <!-- LOGIN / EMAIL -->
-  <input type="text" id="loginEmail" placeholder="Email lub login">
-
-  <!-- HASŁO -->
+  <!-- INPUTY -->
+  <input id="loginEmail" placeholder="Email lub login">
   <input type="password" id="password" placeholder="Hasło">
 
-  <!-- LOGIN -->
+  <!-- PRZYCISKI -->
   <button class="login" id="loginBtn">Zaloguj</button>
+  <button class="register" onclick="location.href='register.html'">Zarejestruj</button>
+</div>
 
-  <!-- REGISTER -->
-  <button class="register" onclick="location.href='register.html'">
-    Zarejestruj
-  </button>
-
+<!-- MODAL LOGIN -->
+<div class="modal" id="nickModal">
+  <div class="modal-box">
+    <h3>Wybierz login</h3>
+    <input id="nickInput" placeholder="Twój login">
+    <div class="error" id="nickError"></div>
+    <button id="saveNick">Zapisz</button>
+  </div>
 </div>
 
 <script type="module">
@@ -92,17 +134,19 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  updateProfile
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
   getFirestore,
   doc,
-  getDoc
+  getDoc,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-   apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+  apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
   authDomain: "hub-krzyzowki.firebaseapp.com",
   databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "hub-krzyzowki",
@@ -115,23 +159,60 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+let googleUser = null;
+
 // GOOGLE LOGIN
-document.getElementById("googleLogin").onclick = () => {
+document.getElementById("googleLogin").onclick = async () => {
   const provider = new GoogleAuthProvider();
-  signInWithPopup(auth, provider).then(() => {
+  const result = await signInWithPopup(auth, provider);
+
+  googleUser = result.user;
+
+  // sprawdź czy ma login w bazie
+  const snap = await getDoc(doc(db, "users", googleUser.uid));
+
+  if (!snap.exists()) {
+    // pokaż modal
+    document.getElementById("nickModal").style.display = "flex";
+  } else {
     location.href = "/";
+  }
+};
+
+// ZAPIS LOGINU GOOGLE
+document.getElementById("saveNick").onclick = async () => {
+  const nick = document.getElementById("nickInput").value.trim();
+
+  if (nick.length < 3) {
+    nickError.innerText = "Min 3 znaki";
+    return;
+  }
+
+  // sprawdź czy zajęty
+  const exists = await getDoc(doc(db, "users", nick));
+  if (exists.exists()) {
+    nickError.innerText = "Login zajęty";
+    return;
+  }
+
+  // zapis
+  await updateProfile(googleUser, { displayName: nick });
+
+  await setDoc(doc(db, "users", nick), {
+    email: googleUser.email
   });
+
+  location.href = "/";
 };
 
 // LOGIN EMAIL / LOGIN
 document.getElementById("loginBtn").onclick = async () => {
-  const input = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("password").value;
+  const input = loginEmail.value.trim();
+  const pass = password.value;
 
   let email = input;
 
   try {
-    // jeśli login (bez @)
     if (!input.includes("@")) {
       const snap = await getDoc(doc(db, "users", input));
 
@@ -143,11 +224,10 @@ document.getElementById("loginBtn").onclick = async () => {
       email = snap.data().email;
     }
 
-    await signInWithEmailAndPassword(auth, email, password);
+    await signInWithEmailAndPassword(auth, email, pass);
     location.href = "/";
-
   } catch (e) {
-    alert("Błąd: " + e.message);
+    alert(e.message);
   }
 };
 </script>
