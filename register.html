@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Rejestracja - Hub Krzyżówki</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: #0f172a;
+      color: #e2e8f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    .box {
+      max-width: 400px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #3b82f6;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .back {
+      margin-top: 15px;
+      display: block;
+      color: #22c55e;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h1>📝 Rejestracja</h1>
+
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Hasło">
+
+    <button id="register">Utwórz konto</button>
+
+    <a href="/" class="back">⬅ Powrót do strony głównej</a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+      authDomain: "hub-krzyzowki.firebaseapp.com",
+      projectId: "hub-krzyzowki",
+      appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    document.getElementById("register").onclick = () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!email.includes("@")) {
+        alert("Podaj poprawny email!");
+        return;
+      }
+
+      if (password.length < 6) {
+        alert("Hasło musi mieć min. 6 znaków!");
+        return;
+      }
+
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          alert("Konto utworzone!");
+          window.location.href = "/";
+        })
+        .catch(err => alert("Błąd: " + err.message));
+    };
+  </script>
+</body>
+</html>
