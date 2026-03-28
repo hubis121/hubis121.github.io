@@ -61,6 +61,12 @@
       color: #22c55e;
       text-decoration: none;
     }
+
+    /* CAPTCHA ukryta na start */
+    #captcha-box {
+      display: none;
+      margin-top: 10px;
+    }
   </style>
 </head>
 
@@ -81,7 +87,10 @@
     <div class="error" id="password2-error"></div>
 
     <!-- CAPTCHA -->
-    <div class="g-recaptcha" data-sitekey="6LfxzpssAAAAAEaY2dRE3ROl-O14osVJb5l2Izc_"></div>
+    <div id="captcha-box">
+      <div class="g-recaptcha" data-sitekey="6LfxzpssAAAAAEaY2dRE3ROl-O14osVJb5l2Izc_"></div>
+      <div class="error" id="captcha-error"></div>
+    </div>
 
     <button id="register">Utwórz konto</button>
 
@@ -93,7 +102,7 @@
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+     apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
   authDomain: "hub-krzyzowki.firebaseapp.com",
   databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "hub-krzyzowki",
@@ -105,11 +114,14 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
+    let showCaptcha = false;
+
     document.getElementById("register").onclick = () => {
       const email = document.getElementById("email").value.trim();
       const email2 = document.getElementById("email2").value.trim();
       const password = document.getElementById("password").value;
       const password2 = document.getElementById("password2").value;
+
       const captcha = grecaptcha.getResponse();
 
       // reset błędów
@@ -117,6 +129,7 @@
       document.getElementById("email2-error").innerText = "";
       document.getElementById("password-error").innerText = "";
       document.getElementById("password2-error").innerText = "";
+      document.getElementById("captcha-error").innerText = "";
 
       let ok = true;
 
@@ -140,12 +153,18 @@
         ok = false;
       }
 
-      if (!captcha) {
-        alert("Potwierdź captcha!");
-        ok = false;
+      // jeśli wcześniej był błąd → pokaż captcha
+      if (!ok) {
+        showCaptcha = true;
+        document.getElementById("captcha-box").style.display = "block";
+        return;
       }
 
-      if (!ok) return;
+      // jeśli captcha jest aktywna → sprawdź ją
+      if (showCaptcha && !captcha) {
+        document.getElementById("captcha-error").innerText = "Potwierdź captcha";
+        return;
+      }
 
       createUserWithEmailAndPassword(auth, email, password)
         .then(() => {
@@ -153,6 +172,12 @@
         })
         .catch(err => {
           document.getElementById("email-error").innerText = err.message;
+
+          // pokaż captcha przy błędzie
+          showCaptcha = true;
+          document.getElementById("captcha-box").style.display = "block";
+
+          grecaptcha.reset();
         });
     };
   </script>
