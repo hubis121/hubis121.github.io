@@ -23,17 +23,12 @@
       max-width: 400px;
     }
 
-    h1 {
-      font-size: 32px;
-    }
-
     input {
       width: 100%;
       padding: 12px;
       margin: 6px 0;
       border-radius: 8px;
       border: none;
-      outline: none;
     }
 
     button {
@@ -48,111 +43,114 @@
 
     .google {
       background: white;
-      color: black;
+      color: #444;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
     }
 
     .login {
       background: #22c55e;
-      color: white;
     }
 
     .register {
       background: #3b82f6;
-      color: white;
-    }
-
-    .links {
-      margin-top: 15px;
-      font-size: 14px;
-    }
-
-    .links a {
-      color: #22c55e;
-      text-decoration: none;
-      margin: 0 5px;
     }
   </style>
 </head>
 
 <body>
-  <div class="box">
-    <h1>🧩 Hub Krzyżówki</h1>
-    <p>Witamy 🚀</p>
+<div class="box">
+  <h1>🧩 Hub Krzyżówki</h1>
 
-    <!-- GOOGLE -->
-    <button class="google" id="googleLogin">
-  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-       style="width:20px; vertical-align:middle; margin-right:8px;">
-  Zaloguj się przez Google
+  <!-- GOOGLE -->
+  <button class="google" id="googleLogin">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+    Zaloguj się przez Google
   </button>
 
-    <!-- EMAIL / LOGIN -->
-    <input type="text" id="loginEmail" placeholder="Email lub login">
+  <!-- LOGIN / EMAIL -->
+  <input type="text" id="loginEmail" placeholder="Email lub login">
 
-    <!-- HASŁO -->
-    <input type="password" id="password" placeholder="Hasło">
+  <!-- HASŁO -->
+  <input type="password" id="password" placeholder="Hasło">
 
-    <!-- ZALOGUJ -->
-    <button class="login" id="loginBtn">Zaloguj</button>
+  <!-- LOGIN -->
+  <button class="login" id="loginBtn">Zaloguj</button>
 
-    <!-- REJESTRACJA -->
-    <button class="register" onclick="window.location.href='register.html'">
-      Zarejestruj
-    </button>
+  <!-- REGISTER -->
+  <button class="register" onclick="location.href='register.html'">
+    Zarejestruj
+  </button>
 
-    <div class="links">
-      <a href="privacy.html">Polityka prywatności</a> |
-      <a href="terms.html">Regulamin</a>
-    </div>
-  </div>
+</div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { 
-      getAuth, 
-      signInWithEmailAndPassword,
-      GoogleAuthProvider,
-      signInWithPopup 
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    const firebaseConfig = {
-       apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+import {
+  getFirestore,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+   apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
   authDomain: "hub-krzyzowki.firebaseapp.com",
   databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "hub-krzyzowki",
   storageBucket: "hub-krzyzowki.firebasestorage.app",
   messagingSenderId: "836287595684",
   appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
-    };
+};
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    // GOOGLE LOGIN
-    document.getElementById("googleLogin").onclick = () => {
-      const provider = new GoogleAuthProvider();
-      signInWithPopup(auth, provider)
-        .then(() => {
-          window.location.href = "/";
-        });
-    };
+// GOOGLE LOGIN
+document.getElementById("googleLogin").onclick = () => {
+  const provider = new GoogleAuthProvider();
+  signInWithPopup(auth, provider).then(() => {
+    location.href = "/";
+  });
+};
 
-    // LOGIN EMAIL
-    document.getElementById("loginBtn").onclick = () => {
-      const loginEmail = document.getElementById("loginEmail").value.trim();
-      const password = document.getElementById("password").value;
+// LOGIN EMAIL / LOGIN
+document.getElementById("loginBtn").onclick = async () => {
+  const input = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("password").value;
 
-      // 🔥 jeśli wpisze login zamiast email → NIE zadziała (firebase wymaga email)
-      // można później rozbudować o bazę loginów
+  let email = input;
 
-      signInWithEmailAndPassword(auth, loginEmail, password)
-        .then(() => {
-          window.location.href = "/";
-        })
-        .catch(err => {
-          alert("Błąd: " + err.message);
-        });
-    };
-  </script>
+  try {
+    // jeśli login (bez @)
+    if (!input.includes("@")) {
+      const snap = await getDoc(doc(db, "users", input));
+
+      if (!snap.exists()) {
+        alert("Login nie istnieje");
+        return;
+      }
+
+      email = snap.data().email;
+    }
+
+    await signInWithEmailAndPassword(auth, email, password);
+    location.href = "/";
+
+  } catch (e) {
+    alert("Błąd: " + e.message);
+  }
+};
+</script>
+
 </body>
 </html>
