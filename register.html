@@ -72,6 +72,10 @@
   <div class="box">
     <h1>📝 Rejestracja</h1>
 
+    <!-- LOGIN -->
+    <input type="text" id="login" placeholder="Login">
+    <div class="error" id="login-error"></div>
+
     <input type="email" id="email" placeholder="Email">
     <div class="error" id="email-error"></div>
 
@@ -84,7 +88,7 @@
     <input type="password" id="password2" placeholder="Powtórz hasło">
     <div class="error" id="password2-error"></div>
 
-    <!-- CAPTCHA zawsze widoczna -->
+    <!-- CAPTCHA -->
     <div class="captcha-box">
       <div class="g-recaptcha" data-sitekey="6LfxzpssAAAAAEaY2dRE3ROl-O14osVJb5l2Izc_"></div>
       <div class="error" id="captcha-error"></div>
@@ -97,7 +101,11 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword,
+      updateProfile 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
      apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
@@ -113,6 +121,7 @@
     const auth = getAuth(app);
 
     document.getElementById("register").onclick = () => {
+      const login = document.getElementById("login").value.trim();
       const email = document.getElementById("email").value.trim();
       const email2 = document.getElementById("email2").value.trim();
       const password = document.getElementById("password").value;
@@ -120,6 +129,7 @@
       const captcha = grecaptcha.getResponse();
 
       // reset błędów
+      document.getElementById("login-error").innerText = "";
       document.getElementById("email-error").innerText = "";
       document.getElementById("email2-error").innerText = "";
       document.getElementById("password-error").innerText = "";
@@ -127,6 +137,11 @@
       document.getElementById("captcha-error").innerText = "";
 
       let ok = true;
+
+      if (login.length < 3) {
+        document.getElementById("login-error").innerText = "Login min. 3 znaki";
+        ok = false;
+      }
 
       if (!email.includes("@")) {
         document.getElementById("email-error").innerText = "Niepoprawny email";
@@ -159,11 +174,17 @@
       }
 
       createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          // zapis loginu jako displayName
+          return updateProfile(userCredential.user, {
+            displayName: login
+          });
+        })
         .then(() => {
           window.location.href = "/";
         })
         .catch(err => {
-          document.getElementById("email-error").innerText = err.message;
+          document.getElementById("login-error").innerText = err.message;
           grecaptcha.reset();
         });
     };
