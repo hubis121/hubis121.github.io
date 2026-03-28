@@ -8,126 +8,99 @@
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
+      font-family: Arial;
+      background: #0b132b;
+      color: white;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      text-align: center;
     }
 
-    .container {
-      max-width: 600px;
+    .box {
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
     }
 
     h1 {
-      font-size: 3rem;
-      margin-bottom: 10px;
+      font-size: 32px;
     }
 
-    .google-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin: 20px auto;
-      padding: 12px 20px;
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 6px 0;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .google {
       background: white;
-      color: #111;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
+      color: black;
     }
 
-    .google-btn:hover {
-      background: #e5e7eb;
-    }
-
-    .auth-box input {
-      width: 80%;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      margin: 5px 0;
-    }
-
-    .auth-box button {
-      margin: 5px;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    #login-email {
+    .login {
       background: #22c55e;
+      color: white;
     }
 
-    #register-btn {
+    .register {
       background: #3b82f6;
       color: white;
     }
 
-    .user-box {
-      margin-top: 20px;
-    }
-
-    #logout {
-      margin-top: 10px;
-      padding: 8px 16px;
-      background: #ef4444;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      cursor: pointer;
-    }
-
     .links {
-      margin-top: 20px;
+      margin-top: 15px;
       font-size: 14px;
-      opacity: 0.6;
     }
 
     .links a {
       color: #22c55e;
       text-decoration: none;
-      margin: 0 10px;
+      margin: 0 5px;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
+  <div class="box">
     <h1>🧩 Hub Krzyżówki</h1>
     <p>Witamy 🚀</p>
 
-    <!-- GOOGLE LOGIN -->
-    <button id="google-login" class="google-btn">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
-      Zaloguj się przez Google
+    <!-- GOOGLE -->
+    <button class="google" id="googleLogin">
+      🔐 Zaloguj się przez Google
     </button>
 
-    <!-- EMAIL LOGIN -->
-    <div class="auth-box">
-      <input type="email" id="email" placeholder="Email">
-      <input type="password" id="password" placeholder="Hasło">
+    <!-- EMAIL / LOGIN -->
+    <input type="text" id="loginEmail" placeholder="Email lub login">
 
-      <button id="login-email">Zaloguj</button>
-      <button id="register-btn" onclick="window.location.href='/register.html'">
-        Zarejestruj
-      </button>
-    </div>
+    <!-- HASŁO -->
+    <input type="password" id="password" placeholder="Hasło">
 
-    <div id="user-box" class="user-box"></div>
+    <!-- ZALOGUJ -->
+    <button class="login" id="loginBtn">Zaloguj</button>
+
+    <!-- REJESTRACJA -->
+    <button class="register" onclick="window.location.href='register.html'">
+      Zarejestruj
+    </button>
 
     <div class="links">
-      <a href="/privacy.html">Polityka prywatności</a> |
-      <a href="/terms.html">Regulamin</a>
+      <a href="privacy.html">Polityka prywatności</a> |
+      <a href="terms.html">Regulamin</a>
     </div>
   </div>
 
@@ -135,15 +108,13 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { 
       getAuth, 
-      signInWithPopup, 
-      GoogleAuthProvider,
       signInWithEmailAndPassword,
-      onAuthStateChanged,
-      signOut
+      GoogleAuthProvider,
+      signInWithPopup 
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
-    apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+       apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
   authDomain: "hub-krzyzowki.firebaseapp.com",
   databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "hub-krzyzowki",
@@ -154,50 +125,32 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-
-    const loginBtn = document.getElementById("google-login");
-    const userBox = document.getElementById("user-box");
 
     // GOOGLE LOGIN
-    loginBtn.onclick = () => {
+    document.getElementById("googleLogin").onclick = () => {
+      const provider = new GoogleAuthProvider();
       signInWithPopup(auth, provider)
-        .catch(err => alert("Błąd: " + err.message));
+        .then(() => {
+          window.location.href = "/";
+        });
     };
 
-    // EMAIL LOGIN
-    document.getElementById("login-email").onclick = () => {
-      const email = document.getElementById("email").value.trim();
+    // LOGIN EMAIL
+    document.getElementById("loginBtn").onclick = () => {
+      const loginEmail = document.getElementById("loginEmail").value.trim();
       const password = document.getElementById("password").value;
 
-      if (!email.includes("@")) {
-        alert("Podaj poprawny email!");
-        return;
-      }
+      // 🔥 jeśli wpisze login zamiast email → NIE zadziała (firebase wymaga email)
+      // można później rozbudować o bazę loginów
 
-      signInWithEmailAndPassword(auth, email, password)
-        .catch(err => alert("Błąd: " + err.message));
+      signInWithEmailAndPassword(auth, loginEmail, password)
+        .then(() => {
+          window.location.href = "/";
+        })
+        .catch(err => {
+          alert("Błąd: " + err.message);
+        });
     };
-
-    // AUTH STATE
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        loginBtn.style.display = "none";
-
-        userBox.innerHTML = `
-          <p>Zalogowany jako:<br><b>${user.email || user.displayName}</b></p>
-          <button id="logout">Wyloguj</button>
-        `;
-
-        document.getElementById("logout").onclick = () => {
-          signOut(auth);
-        };
-
-      } else {
-        loginBtn.style.display = "flex";
-        userBox.innerHTML = "";
-      }
-    });
   </script>
 </body>
 </html>
