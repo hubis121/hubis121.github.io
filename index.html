@@ -17,122 +17,151 @@
       height: 100vh;
       text-align: center;
     }
+
     .container {
       max-width: 600px;
     }
+
     h1 {
       font-size: 3rem;
+      margin-bottom: 10px;
     }
+
     p {
       opacity: 0.7;
     }
-    button, a {
-      display: inline-block;
-      margin-top: 15px;
-      padding: 10px 20px;
-      background: #22c55e;
-      color: black;
+
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px auto;
+      padding: 12px 20px;
+      background: white;
+      color: #111;
       border: none;
-      text-decoration: none;
-      border-radius: 8px;
+      border-radius: 10px;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+      transition: 0.2s;
     }
-    button:hover, a:hover {
-      background: #16a34a;
+
+    .google-btn img {
+      width: 20px;
+      height: 20px;
     }
-    .footer {
-      margin-top: 30px;
-      font-size: 0.9rem;
+
+    .google-btn:hover {
+      background: #e5e7eb;
+      transform: scale(1.03);
+    }
+
+    .links {
+      margin-top: 20px;
+      font-size: 14px;
       opacity: 0.6;
     }
-    .footer a {
-      background: none;
-      color: #94a3b8;
-      padding: 0;
-      margin: 0 5px;
+
+    .links a {
+      color: #22c55e;
+      text-decoration: none;
+      margin: 0 10px;
+    }
+
+    .links a:hover {
+      text-decoration: underline;
+    }
+
+    .user-box {
+      margin-top: 20px;
+    }
+
+    .logout-btn {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background: #ef4444;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .logout-btn:hover {
+      background: #dc2626;
     }
   </style>
 </head>
-<body>
 
+<body>
   <div class="container">
     <h1>🧩 Hub Krzyżówki</h1>
+    <p>Witamy na naszej stronie 🚀</p>
 
-    <p id="userInfo">Nie jesteś zalogowany</p>
+    <button id="google-login" class="google-btn">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg">
+      Zaloguj się przez Google
+    </button>
 
-    <button id="loginBtn">Zaloguj się Google</button>
-    <button id="logoutBtn" style="display:none;">Wyloguj</button>
+    <div class="user-box" id="user-box"></div>
 
-    <br>
-
-    <a href="https://hub-krzyzowki.firebaseapp.com" target="_blank">
-      Przejdź do aplikacji Hub Krzyżówki
-    </a>
-
-    <!-- 📜 LINKI DLA GOOGLE -->
-    <div class="footer">
+    <div class="links">
       <a href="/privacy.html">Polityka prywatności</a> |
-      <a href="/terms.html">Warunki korzystania</a>
+      <a href="/terms.html">Regulamin</a>
     </div>
   </div>
 
-  <!-- 🔥 Firebase -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { 
       getAuth, 
       signInWithPopup, 
       GoogleAuthProvider, 
-      signOut, 
-      onAuthStateChanged 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+      onAuthStateChanged, 
+      signOut 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
- apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
-  authDomain: "hub-krzyzowki.firebaseapp.com",
-  databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "hub-krzyzowki",
-  storageBucket: "hub-krzyzowki.firebasestorage.app",
-  messagingSenderId: "836287595684",
-  appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
+      apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
+     authDomain: "hub-krzyzowki.firebaseapp.com",
+     databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
+     projectId: "hub-krzyzowki",
+     storageBucket: "hub-krzyzowki.firebasestorage.app",
+     messagingSenderId: "836287595684",
+     appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const userInfo = document.getElementById("userInfo");
+    const loginBtn = document.getElementById("google-login");
+    const userBox = document.getElementById("user-box");
 
-    // 🔐 logowanie
-    loginBtn.addEventListener("click", async () => {
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (err) {
-        alert("Błąd: " + err.message);
-      }
-    });
+    loginBtn.onclick = () => {
+      signInWithPopup(auth, provider)
+        .catch(err => console.error(err));
+    };
 
-    // 🚪 wylogowanie
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-    });
-
-    // 👀 stan użytkownika
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, user => {
       if (user) {
-        userInfo.textContent = "Zalogowany jako: " + user.displayName;
         loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
+
+        userBox.innerHTML = `
+          <p>Zalogowany jako:<br><b>${user.displayName}</b></p>
+          <button class="logout-btn" id="logout">Wyloguj</button>
+        `;
+
+        document.getElementById("logout").onclick = () => {
+          signOut(auth);
+        };
+
       } else {
-        userInfo.textContent = "Nie jesteś zalogowany";
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
+        loginBtn.style.display = "flex";
+        userBox.innerHTML = "";
       }
     });
   </script>
-
 </body>
 </html>
