@@ -53,6 +53,12 @@ button {
 
 .user-panel { display:none; }
 
+.info {
+  font-size:13px;
+  margin-top:5px;
+  min-height:18px;
+}
+
 .links {
   margin-top:15px;
   font-size:14px;
@@ -87,7 +93,13 @@ Zaloguj się przez Google
 <input id="loginEmail" placeholder="Email lub login">
 <input type="password" id="password" placeholder="Hasło">
 
+<div id="loginInfo" class="info"></div>
+
 <button class="login" id="loginBtn">Zaloguj</button>
+
+<button id="resetBtn">Resetuj hasło</button>
+<div id="resetInfo" class="info"></div>
+
 <button class="register" onclick="location.href='register.html'">Zarejestruj</button>
 
 </div>
@@ -113,7 +125,8 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
@@ -138,7 +151,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 
-// 🔥 UI LOGIN
+// 🔄 OBSŁUGA SESJI
 onAuthStateChanged(auth, async (user) => {
 
   if (user) {
@@ -147,20 +160,15 @@ onAuthStateChanged(auth, async (user) => {
     userPanel.style.display = "block";
 
     let login = user.displayName || "Użytkownik";
-    welcomeText.innerText = "Witaj, " + login + " 😎";
 
     try {
       const snap = await getDoc(doc(db, "users", user.uid));
-
       if (snap.exists()) {
         login = snap.data().login;
-        welcomeText.innerText = "Witaj, " + login + " 😎";
-        localStorage.setItem("login", login);
       }
+    } catch {}
 
-    } catch (e) {
-      console.log(e);
-    }
+    welcomeText.innerText = "Witaj, " + login + " 😎";
 
   } else {
     authBox.style.display = "block";
@@ -177,41 +185,33 @@ document.getElementById("googleLogin").onclick = async () => {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
 
-    welcomeText.innerText = "Witaj, " + user.displayName + " 😎";
+    const snap = await getDoc(doc(db, "users", user.uid));
 
-    try {
-      const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists()) {
+      let nick = prompt("Podaj login:");
 
-      if (!snap.exists()) {
-        let nick = prompt("Podaj login:");
+      if (!nick || nick.length < 3) return;
 
-        if (!nick || nick.length < 3) return;
-
-        const check = await getDoc(doc(db, "logins", nick));
-        if (check.exists()) {
-          alert("Login zajęty");
-          return;
-        }
-
-        await setDoc(doc(db, "users", user.uid), {
-          login: nick,
-          email: user.email
-        });
-
-        await setDoc(doc(db, "logins", nick), {
-          uid: user.uid,
-          email: user.email
-        });
-
-        localStorage.setItem("login", nick);
+      const check = await getDoc(doc(db, "logins", nick));
+      if (check.exists()) {
+        alert("Login zajęty");
+        return;
       }
 
-    } catch (e) {
-      console.log(e);
+      await setDoc(doc(db, "users", user.uid), {
+        login: nick,
+        email: user.email
+      });
+
+      await setDoc(doc(db, "logins", nick), {
+        uid: user.uid,
+        email: user.email
+      });
     }
 
   } catch (e) {
-    alert("Błąd Google: " + e.message);
+    loginInfo.innerText = "Błąd Google";
+    loginInfo.style.color = "red";
   }
 };
 
@@ -221,6 +221,8 @@ document.getElementById("loginBtn").onclick = async () => {
   const input = loginEmail.value.trim();
   const pass = password.value;
 
+  loginInfo.innerText = "";
+
   let email = input;
 
   try {
@@ -228,7 +230,8 @@ document.getElementById("loginBtn").onclick = async () => {
       const snap = await getDoc(doc(db, "logins", input));
 
       if (!snap.exists()) {
-        alert("Login nie istnieje");
+        loginInfo.innerText = "Login nie istnieje";
+        loginInfo.style.color = "red";
         return;
       }
 
@@ -238,14 +241,53 @@ document.getElementById("loginBtn").onclick = async () => {
     await signInWithEmailAndPassword(auth, email, pass);
 
   } catch (e) {
-    alert("Błąd: " + e.message);
+    loginInfo.innerText = "Błędne dane logowania";
+    loginInfo.style.color = "red";
+  }
+};
+
+
+// 🔁 RESET HASŁA
+document.getElementById("resetBtn").onclick = async () => {
+  const input = loginEmail.value.trim();
+
+  resetInfo.innerText = "";
+
+  if (!input) {
+    resetInfo.innerText = "Podaj email lub login";
+    resetInfo.style.color = "red";
+    return;
+  }
+
+  let email = input;
+
+  try {
+    if (!input.includes("@")) {
+      const snap = await getDoc(doc(db, "logins", input));
+
+      if (!snap.exists()) {
+        resetInfo.innerText = "Login nie istnieje";
+        resetInfo.style.color = "red";
+        return;
+      }
+
+      email = snap.data().email;
+    }
+
+    await sendPasswordResetEmail(auth, email);
+
+    resetInfo.innerText = "📩 Email do resetu wysłany!";
+    resetInfo.style.color = "lightgreen";
+
+  } catch (e) {
+    resetInfo.innerText = "Błąd: " + e.message;
+    resetInfo.style.color = "red";
   }
 };
 
 
 // 🔴 WYLOGUJ
 document.getElementById("logoutBtn").onclick = () => {
-  localStorage.removeItem("login");
   signOut(auth);
 };
 </script>
