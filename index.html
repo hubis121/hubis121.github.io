@@ -23,16 +23,22 @@
     h1 {
       font-size: 3rem;
     }
-    button {
-      margin-top: 20px;
+    p {
+      opacity: 0.7;
+    }
+    button, a {
+      display: inline-block;
+      margin-top: 15px;
       padding: 10px 20px;
       background: #22c55e;
+      color: black;
       border: none;
+      text-decoration: none;
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
     }
-    button:hover {
+    button:hover, a:hover {
       background: #16a34a;
     }
   </style>
@@ -41,24 +47,37 @@
 
   <div class="container">
     <h1>🧩 Hub Krzyżówki</h1>
+
     <p id="userInfo">Nie jesteś zalogowany</p>
+
     <button id="loginBtn">Zaloguj się Google</button>
     <button id="logoutBtn" style="display:none;">Wyloguj</button>
+
+    <br>
+
+    <a href="https://hub-krzyzowki.firebaseapp.com" target="_blank">
+      Przejdź do aplikacji Hub Krzyżówki
+    </a>
   </div>
 
+  <!-- 🔥 Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } 
-      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { 
+      getAuth, 
+      signInWithPopup, 
+      GoogleAuthProvider, 
+      signOut, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
-  apiKey: "AIzaSyBM-llo5yOdrwBbuAgGhspesvbqXOnM5go",
-  authDomain: "hub-krzyzowki.firebaseapp.com",
-  databaseURL: "https://hub-krzyzowki-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "hub-krzyzowki",
-  storageBucket: "hub-krzyzowki.firebasestorage.app",
-  messagingSenderId: "836287595684",
-  appId: "1:836287595684:web:c6918e92dd86fcdbfad231"
+      apiKey: "...",
+      authDomain: "...",
+      projectId: "...",
+      storageBucket: "...",
+      messagingSenderId: "...",
+      appId: "..."
     };
 
     const app = initializeApp(firebaseConfig);
@@ -74,7 +93,7 @@
       try {
         await signInWithPopup(auth, provider);
       } catch (err) {
-        alert("Błąd logowania: " + err.message);
+        alert("Błąd: " + err.message);
       }
     });
 
@@ -83,7 +102,7 @@
       await signOut(auth);
     });
 
-    // 👀 obserwacja użytkownika
+    // 👀 stan użytkownika
     onAuthStateChanged(auth, (user) => {
       if (user) {
         userInfo.textContent = "Zalogowany jako: " + user.displayName;
